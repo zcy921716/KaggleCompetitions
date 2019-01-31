@@ -6,7 +6,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 
 # Path of the file to read. We changed the directory structure to simplify submitting to a competition
-iowa_file_path = '../input/train.csv'
+iowa_file_path = "~/KaggleCompetitions/HousingPrices/train.csv"
 
 home_data = pd.read_csv(iowa_file_path)
 # Create target object and call it y
@@ -51,7 +51,7 @@ rf_model_on_full_data = RandomForestRegressor()
 rf_model_on_full_data.fit(X, y)
 
 # path to file you will use for predictions
-test_data_path = '../input/test.csv'
+test_data_path = "~/KaggleCompetitions/HousingPrices/test.csv"
 
 # read test data file using pandas
 test_data = pd.read_csv(test_data_path)

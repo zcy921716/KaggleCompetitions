@@ -1,54 +1,17 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.impute import SimpleImputer
 
 
 # Path of the file to read. We changed the directory structure to simplify submitting to a competition
 iowa_file_path = "~/KaggleCompetitions/HousingPrices/train.csv"
 
 home_data = pd.read_csv(iowa_file_path)
-# Create target object and call it y
-y = home_data.SalePrice
-# Create X
-features = ['LotArea', 'YearBuilt', '1stFlrSF',
-            '2ndFlrSF', 'FullBath', 'BedroomAbvGr', 'TotRmsAbvGrd']
-X = home_data[features]
 
-# Split into validation and training data
-train_X, val_X, train_y, val_y = train_test_split(X, y, random_state=1)
 
-# Specify Model
-iowa_model = DecisionTreeRegressor(random_state=1)
-# Fit Model
-iowa_model.fit(train_X, train_y)
-
-# Make validation predictions and calculate mean absolute error
-val_predictions = iowa_model.predict(val_X)
-val_mae = mean_absolute_error(val_predictions, val_y)
-print("Validation MAE when not specifying max_leaf_nodes: {:,.0f}".format(val_mae))
-
-# Using best value for max_leaf_nodes
-iowa_model = DecisionTreeRegressor(max_leaf_nodes=100, random_state=1)
-iowa_model.fit(train_X, train_y)
-val_predictions = iowa_model.predict(val_X)
-val_mae = mean_absolute_error(val_predictions, val_y)
-print("Validation MAE for best value of max_leaf_nodes: {:,.0f}".format(val_mae))
-
-# Define the model. Set random_state to 1
-rf_model = RandomForestRegressor(random_state=1)
-rf_model.fit(train_X, train_y)
-rf_val_predictions = rf_model.predict(val_X)
-rf_val_mae = mean_absolute_error(rf_val_predictions, val_y)
-
-print("Validation MAE for Random Forest Model: {:,.0f}".format(rf_val_mae))
-
-# To improve accuracy, create a new Random Forest model which you will train on all training data
-rf_model_on_full_data = RandomForestRegressor()
-
-# fit rf_model_on_full_data on all data from the
-rf_model_on_full_data.fit(X, y)
+new_home_data = home_data.copy()
+missingValueCountByColumn = (new_home_data.isnull().sum())
+missingColumn = missingValueCountByColumn > 0
 
 # path to file you will use for predictions
 test_data_path = "~/KaggleCompetitions/HousingPrices/test.csv"
@@ -56,9 +19,61 @@ test_data_path = "~/KaggleCompetitions/HousingPrices/test.csv"
 # read test data file using pandas
 test_data = pd.read_csv(test_data_path)
 
+
+new_test_data = test_data.copy()
+test_missingValueCountByColumn = (new_test_data.isnull().sum())
+test_missingColumn = test_missingValueCountByColumn > 0
+
+new_data_string = new_home_data.select_dtypes('object')
+new_data_not_string = new_home_data.select_dtypes(exclude='object')
+
+median_imputer = SimpleImputer(strategy='median')
+missing_imputer = SimpleImputer(strategy='constant', fill_value='missing')
+
+new_data_string_imputed = pd.DataFrame(missing_imputer.fit_transform(new_data_string))
+new_data_string_imputed.columns = new_data_string.columns
+new_data_not_string_imputed = pd.DataFrame(median_imputer.fit_transform(new_data_not_string))
+new_data_not_string_imputed.columns = new_data_not_string.columns
+
+new_home_data = pd.concat([new_data_string_imputed, new_data_not_string_imputed], axis=1)
+
+
+for col in new_test_data.columns:
+    if missingColumn[col] or test_missingColumn[col]:
+        new_home_data[col+"_was_missing"] = new_home_data[col].isnull()
+
+
+y = new_home_data.SalePrice
+# Create X
+features = list(new_home_data.select_dtypes(exclude='object'))
+features.remove('SalePrice')
+
+X = new_home_data[features]
+
+
+# To improve accuracy, create a new Random Forest model which you will train on all training data
+rf_model_on_full_data = RandomForestRegressor()
+
+# fit rf_model_on_full_data on all data from the
+rf_model_on_full_data.fit(X, y)
+
+
+test_data_string = new_test_data.select_dtypes('object')
+test_data_not_string = new_test_data.select_dtypes(exclude='object')
+
+
+test_data_string_imputed = pd.DataFrame(missing_imputer.fit_transform(test_data_string))
+test_data_string_imputed.columns = test_data_string.columns
+test_data_not_string_imputed = pd.DataFrame(median_imputer.fit_transform(test_data_not_string))
+test_data_not_string_imputed.columns = test_data_not_string.columns
+new_test_data = pd.concat([test_data_string_imputed, test_data_not_string_imputed], axis=1)
+
+for col in new_test_data.columns:
+    if test_missingColumn[col] or missingColumn[col]:
+        new_test_data[col+"_was_missing"] = new_test_data[col].isnull()
 # create test_X which comes from test_data but includes only the columns you used for prediction.
 # The list of columns is stored in a variable called features
-test_X = test_data[features]
+test_X = new_test_data[features]
 
 # make predictions which we will submit.
 test_preds = rf_model_on_full_data.predict(test_X)

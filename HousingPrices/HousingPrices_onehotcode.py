@@ -86,6 +86,7 @@ for a, b in np.ndindex((900, 10)):
     my_model.fit(train_X, train_y, early_stopping_rounds=5,
                  eval_set=[(test_X, test_y)], verbose=False)
     mse = mean_squared_error(my_model.predict(valid_X), valid_y)
+    print(a, b, mse)
     if mse < best_mse:
         best_n = 100 + a
         best_rate = 0.01*b

@@ -74,29 +74,29 @@ y = home_data.SalePrice
 features = final_test.columns
 X = final_train[features]
 
-train_X, testall_X, train_y, testall_y = train_test_split(
-    X.as_matrix(), y.as_matrix(), test_size=0.4)
-test_X, valid_X, test_y, valid_y = train_test_split(
-    testall_X, testall_y, test_size=0.5)
-
-best_n = 0
-best_rate = 0
-best_mae = 100000000000
-for a, b in np.ndindex((90, 10)):
-
-    my_model = XGBRegressor(n_estimators=100+10*a, learning_rate=0.01*(b+1), n_jobs=4)
-    my_model.fit(train_X, train_y, early_stopping_rounds=5,
-                 eval_set=[(test_X, test_y)], verbose=False)
-    mae = mean_absolute_error(my_model.predict(valid_X), valid_y)
-    print(a, b, mae)
-    if mae < best_mae:
-        best_n = 100 + 10*a
-        best_rate = 0.01*(b+1)
-        best_mae = mae
+# train_X, testall_X, train_y, testall_y = train_test_split(
+#     X.as_matrix(), y.as_matrix(), test_size=0.4)
+# test_X, valid_X, test_y, valid_y = train_test_split(
+#     testall_X, testall_y, test_size=0.5)
+#
+# best_n = 0
+# best_rate = 0
+# best_mae = 100000000000
+# for a, b in np.ndindex((190, 20)):
+#
+#     my_model = XGBRegressor(n_estimators=100+10*a, learning_rate=0.01*(b+1), n_jobs=4)
+#     my_model.fit(train_X, train_y, early_stopping_rounds=5,
+#                  eval_set=[(test_X, test_y)], verbose=False)
+#     mae = mean_absolute_error(my_model.predict(valid_X), valid_y)
+#     print(a, b, mae)
+#     if mae < best_mae:
+#         best_n = 100 + 10*a
+#         best_rate = 0.01*(b+1)
+#         best_mae = mae
 
 
 # To improve accuracy, create a new Random Forest model which you will train on all training data
-rf_model_on_full_data = XGBRegressor(n_estimators=1200, learning_rate=0.05, n_jobs=4)
+rf_model_on_full_data = XGBRegressor(n_estimators=400, learning_rate=0.17, n_jobs=4)
 
 # fit rf_model_on_full_data on all data from the
 rf_model_on_full_data.fit(X, y, verbose=False)
